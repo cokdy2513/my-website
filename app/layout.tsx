@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { DemoEnhancements } from "./components/DemoEnhancements";
 
 export const metadata: Metadata = {
   title: "Action Switch — 생각을 행동으로",
@@ -7,5 +8,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="ko"><body>{children}</body></html>;
+  return (
+    <html lang="ko">
+      <body>
+        {children}
+        <DemoEnhancements />
+      </body>
+    </html>
+  );
 }

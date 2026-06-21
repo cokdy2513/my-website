@@ -2,16 +2,238 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'KyoboHandwriting2019';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/KyoboHand.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
+  --glass-surface: rgba(20, 23, 45, 0.58);
+  --glass-surface-strong: rgba(14, 17, 34, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-highlight: rgba(255, 255, 255, 0.07);
+  --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #070812;
 }
 
 body {
-  @apply bg-gradient-to-br from-bg to-bg2 text-white min-h-screen;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(139, 92, 246, 0.20), transparent 31%),
+    radial-gradient(circle at 86% 9%, rgba(34, 211, 238, 0.13), transparent 28%),
+    radial-gradient(circle at 72% 86%, rgba(236, 72, 153, 0.10), transparent 30%),
+    #070812;
+  color: #f8f7ff;
+  font-family: 'KyoboHandwriting2019', 'Noto Sans KR', sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  letter-spacing: 0.015em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+main {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    transparent !important;
+  background-size: 52px 52px !important;
+}
+
+main::before,
+main::after {
+  position: fixed;
+  z-index: -1;
+  width: 36rem;
+  height: 36rem;
+  border-radius: 999px;
+  content: '';
+  filter: blur(110px);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+main::before {
+  top: -17rem;
+  right: -10rem;
+  background: #8b5cf6;
+}
+
+main::after {
+  bottom: -22rem;
+  left: 15%;
+  background: #22d3ee;
+}
+
+/* Global glassmorphism surfaces */
+main > aside,
+main header,
+main nav,
+main [class*="rounded-2xl"][class*="border"],
+main [class*="rounded-xl"][class*="border"],
+main input,
+main textarea,
 .glass {
-  @apply bg-white/5 border border-white/10 shadow-card backdrop-blur-md;
+  border-color: var(--glass-border) !important;
+  background-color: var(--glass-surface) !important;
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.012)) !important;
+  box-shadow: var(--glass-shadow) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+}
+
+main > aside {
+  background-color: rgba(7, 8, 20, 0.66) !important;
+  box-shadow: 22px 0 70px rgba(0, 0, 0, 0.24), inset -1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+main header {
+  background-color: rgba(7, 8, 20, 0.32) !important;
+  box-shadow: inset 0 -1px rgba(255, 255, 255, 0.08) !important;
+}
+
+main button:not([class*="bg-gradient"]) {
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  backdrop-filter: blur(16px) saturate(130%);
+}
+
+main button:hover {
+  border-color: rgba(196, 181, 253, 0.34) !important;
+}
+
+main input:focus,
+main textarea:focus {
+  border-color: rgba(196, 181, 253, 0.52) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.13), var(--glass-shadow) !important;
+}
+
+/* Requested handwritten typeface across the complete demo */
+.font-mono,
+code,
+kbd,
+pre {
+  font-family: 'KyoboHandwriting2019', 'Noto Sans KR', sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+strong,
+b {
+  letter-spacing: 0.005em !important;
+}
+
+/* Readability floor: especially Execution History/KPI labels */
+[class*="text-[7px]"] {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+[class*="text-[8px]"] {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+[class*="text-[9px]"] {
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+[class*="text-[10px]"] {
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+}
+
+[class*="text-[11px]"] {
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+}
+
+.text-xs {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+}
+
+.text-sm {
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+}
+
+/* Raise contrast of previously dim helper text */
+[class*="text-slate-700"] {
+  color: rgba(203, 213, 225, 0.68) !important;
+}
+
+[class*="text-slate-600"] {
+  color: rgba(203, 213, 225, 0.76) !important;
+}
+
+[class*="text-slate-500"] {
+  color: rgba(226, 232, 240, 0.82) !important;
+}
+
+[class*="text-slate-400"] {
+  color: rgba(241, 245, 249, 0.90) !important;
+}
+
+/* Improve KPI and history density without losing hierarchy */
+main [class*="grid-cols-4"] > [class*="rounded-2xl"],
+main [class*="grid-cols-2"] > [class*="rounded-2xl"] {
+  min-height: 104px;
+}
+
+main svg[role="img"] {
+  filter: drop-shadow(0 10px 22px rgba(139, 92, 246, 0.16));
+}
+
+main [class*="divide-y"] > button {
+  min-height: 92px;
+}
+
+main [class*="divide-y"] > button strong {
+  font-size: 17px !important;
+  line-height: 1.5 !important;
+}
+
+main [class*="divide-y"] > button small {
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+::placeholder {
+  color: rgba(203, 213, 225, 0.52) !important;
+  opacity: 1;
+}
+
+::selection {
+  background: rgba(167, 139, 250, 0.36);
+  color: #ffffff;
 }
 
 .pill {
@@ -21,11 +243,49 @@ body {
 .mini-map {
   width: 140px;
   height: 110px;
-  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
 }
 
 .leaflet-container {
   background: #0f172a;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+
+  [class*="text-[7px]"],
+  [class*="text-[8px]"] {
+    font-size: 12px !important;
+  }
+
+  [class*="text-[9px]"],
+  [class*="text-[10px]"],
+  [class*="text-[11px]"] {
+    font-size: 13px !important;
+  }
+
+  .text-xs {
+    font-size: 15px !important;
+  }
+
+  main::before,
+  main::after {
+    width: 22rem;
+    height: 22rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

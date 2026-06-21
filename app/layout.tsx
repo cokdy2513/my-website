@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./enhancements.css";
+import "./memo-layout.css";
 import { DemoEnhancements } from "./components/DemoEnhancements";
 
 export const metadata: Metadata = {

@@ -1,93 +1,62 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Header } from "./components/Header";
-import { Filters } from "./components/Filters";
-import { MapView } from "./components/MapView";
-import { CourseCard } from "./components/CourseCard";
-import type { Course } from "@/lib/types";
+import { createClient } from "@supabase/supabase-js";
+import { BrainCircuit, Check, ChevronRight, Clock3, Flame, Inbox, Pause, Play, RotateCcw, Sparkles, WandSparkles, Zap } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Home = { lat: number; lng: number };
-const STORAGE_KEY = "homeCoord";
-const defaultHome: Home = { lat: 37.5665, lng: 126.9780 };
+type Phase = "capture" | "recommend" | "focus" | "done";
+type Rec = { action: string; step: string; reason: string };
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || "https://xwyycumeinkezapoxojz.supabase.co", process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_C1UrdSBahBFdJgNVVl_oeg_ukWH1PWx");
+const samples = ["첫 사용자 인터뷰를 시작해야 한다.", "포트폴리오 소개 문장을 정리해야 한다.", "Three.js 화면을 실험해보고 싶다."];
 
-export default function Page() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [home, setHome] = useState<Home>(defaultHome);
-  const [selectedId, setSelectedId] = useState<string>();
-  const [showWritten, setShowWritten] = useState(true);
-  const [showPractical, setShowPractical] = useState(true);
-  const TITLE_KEYWORDS = ["정보처리"]; // 제목에 이 키워드가 포함된 경우만 노출
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.lat && parsed.lng) setHome(parsed);
-      } catch (_) {}
-    }
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/courses")
-      .then((res) => res.json())
-      .then((data: Course[]) => setCourses(data));
-  }, []);
-
-  const filtered = useMemo(() => {
-    return courses.filter((c) => {
-      const hasKeyword = TITLE_KEYWORDS.some((k) => c.title.includes(k));
-      if (!hasKeyword) return false; // 제목 기준 필터
-      if (c.mode === "필기" && !showWritten) return false;
-      if (c.mode === "실기" && !showPractical) return false;
-      return true;
-    });
-  }, [courses, showWritten, showPractical]);
-
-  return (
-    <div className="max-w-6xl mx-auto pb-10">
-      <Header />
-      <div className="px-4 sm:px-6 space-y-4">
-        <Filters
-          showWritten={showWritten}
-          showPractical={showPractical}
-          onChange={(f) => {
-            if (f.showWritten !== undefined) setShowWritten(f.showWritten);
-            if (f.showPractical !== undefined) setShowPractical(f.showPractical);
-          }}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          <MapView
-            courses={filtered}
-            home={home}
-            selectedId={selectedId}
-            onSelect={(id) => setSelectedId(id)}
-            onHomeChange={(lat, lng) => {
-              setHome({ lat, lng });
-              localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lng }));
-            }}
-          />
-
-          <div className="space-y-3 max-h-[540px] overflow-y-auto pr-1">
-            {filtered.map((c) => (
-              <CourseCard
-                key={c.id}
-                course={c}
-                home={home}
-                selected={selectedId === c.id}
-                onSelect={() => setSelectedId(c.id)}
-              />
-            ))}
-            {filtered.length === 0 && (
-              <div className="glass rounded-2xl p-6 text-muted text-center">
-                조건에 맞는 과정이 없습니다. 필터를 조정하세요.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function recommend(memo: string): Rec {
+  if (/인터뷰|사용자|고객/.test(memo)) return { action: "첫 사용자 인터뷰 질문 5개 완성하기", step: "확인하고 싶은 가설 1개를 한 문장으로 적기", reason: "가설 하나를 먼저 정하면 질문 범위가 작아져 바로 시작할 수 있어요." };
+  if (/포트폴리오|소개/.test(memo)) return { action: "대표 프로젝트 소개 문장 완성하기", step: "문제·내 역할·결과라는 제목만 먼저 적기", reason: "완벽한 문장보다 구조를 먼저 만들면 수정이 쉬워져요." };
+  if (/three|3d|디자인|화면/i.test(memo)) return { action: "3D 실행 코어의 첫 장면 구현하기", step: "회전하는 구체와 조명 하나만 화면에 띄우기", reason: "작동하는 첫 장면이 다음 실험을 여는 가장 작은 결과물이에요." };
+  return { action: "가장 중요한 메모 하나를 실행 문장으로 바꾸기", step: "오늘 끝낼 수 있는 동사 하나에 밑줄 긋기", reason: "행동을 하나로 줄이면 선택 피로가 낮아지고 시작 가능성이 높아져요." };
 }
+async function track(event_type: string, metadata: Record<string, unknown> = {}) { try { let id=localStorage.getItem("as-visitor"); if(!id){id=crypto.randomUUID();localStorage.setItem("as-visitor",id)} await db.from("demo_analytics").insert({visitor_id:id,event_type,metadata}); } catch {} }
+
+function Orbit({ phase, progress }: { phase: Phase; progress: number }) {
+  const mount = useRef<HTMLDivElement>(null);
+  useEffect(() => { let stop=()=>{}; let disposed=false; void import("three").then(T=>{
+    if(!mount.current||disposed)return; const host=mount.current, scene=new T.Scene(), camera=new T.PerspectiveCamera(42,1,.1,100); camera.position.z=6;
+    const renderer=new T.WebGLRenderer({alpha:true,antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); host.appendChild(renderer.domElement);
+    const group=new T.Group(); scene.add(group); const colors=phase==="focus"?[0xff9a55,0xffcf70]:phase==="done"?[0x4ce3a2,0xa8ffd7]:[0x8f76ff,0x67e5ff];
+    const core=new T.Mesh(new T.IcosahedronGeometry(1.02,4),new T.MeshPhysicalMaterial({color:colors[0],emissive:colors[0],emissiveIntensity:1.2,roughness:.16,metalness:.35,clearcoat:1})); group.add(core);
+    const shell=new T.Mesh(new T.IcosahedronGeometry(1.35,2),new T.MeshBasicMaterial({color:colors[1],wireframe:true,transparent:true,opacity:.2})); group.add(shell);
+    [1.7,2].forEach((r,i)=>{const ring=new T.Mesh(new T.TorusGeometry(r,.011-i*.003,8,150),new T.MeshBasicMaterial({color:colors[i],transparent:true,opacity:.48-i*.16}));ring.rotation.set(.55+i*.55,.35+i*.85,.25+i*.4);group.add(ring)});
+    const positions=new Float32Array(420); for(let i=0;i<positions.length;i++)positions[i]=(Math.random()-.5)*(i%3===2?3.5:7); const geometry=new T.BufferGeometry();geometry.setAttribute("position",new T.BufferAttribute(positions,3));const stars=new T.Points(geometry,new T.PointsMaterial({color:colors[1],size:.024,transparent:true,opacity:.4}));scene.add(stars);
+    scene.add(new T.AmbientLight(0xffffff,1));const light=new T.PointLight(colors[0],10,15);light.position.set(2.5,2.5,4);scene.add(light);
+    const resize=()=>{const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()};const observer=new ResizeObserver(resize);observer.observe(host);resize();let frame=0;const clock=new T.Clock();
+    const loop=()=>{const t=clock.getElapsedTime(),speed=phase==="focus"?.022:.009;group.rotation.y+=speed;group.rotation.x=Math.sin(t*.25)*.1;shell.rotation.z-=speed*.65;core.scale.setScalar(1+Math.sin(t*(phase==="focus"?3.2:1.7))*.035+progress*.08);stars.rotation.y-=.0008;renderer.render(scene,camera);frame=requestAnimationFrame(loop)};loop();stop=()=>{cancelAnimationFrame(frame);observer.disconnect();renderer.dispose();host.replaceChildren()};
+  });return()=>{disposed=true;stop()};},[phase,progress]);
+  return <div ref={mount} className="min-h-[330px] flex-1 md:min-h-[390px]" aria-label="실행 에너지를 표현하는 Three.js 3D 오브젝트"/>;
+}
+
+const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-100 via-violet-300 to-cyan-300 px-5 text-xs font-bold text-slate-950 shadow-[0_12px_35px_rgba(130,100,255,.18)] transition hover:-translate-y-0.5";
+const ghost="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[.025] px-5 text-xs text-slate-400";
+export default function Page(){
+  const [memo,setMemo]=useState(""),[phase,setPhase]=useState<Phase>("capture"),[rec,setRec]=useState<Rec|null>(null),[seconds,setSeconds]=useState(900),[running,setRunning]=useState(false),[reflection,setReflection]=useState("");
+  const date=useMemo(()=>new Intl.DateTimeFormat("ko-KR",{month:"long",day:"numeric",weekday:"short"}).format(new Date()),[]),progress=1-seconds/900,timer=`${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}`;
+  useEffect(()=>{if(!running||phase!=="focus")return;const id=setInterval(()=>setSeconds(v=>{if(v<=1){clearInterval(id);setRunning(false);setPhase("done");void track("focus_finished");return 0}return v-1}),1000);return()=>clearInterval(id)},[running,phase]);
+  const submit=()=>{if(memo.trim().length<3)return;setRec(recommend(memo));setPhase("recommend");void track("memo_submitted",{length:memo.length})};
+  const reset=()=>{setMemo("");setRec(null);setSeconds(900);setRunning(false);setReflection("");setPhase("capture")};
+  return <main className="relative grid min-h-screen overflow-hidden bg-[#070812] text-[#f7f5ff] [background-image:radial-gradient(circle_at_82%_12%,rgba(118,78,255,.17),transparent_27%),linear-gradient(rgba(255,255,255,.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.018)_1px,transparent_1px)] [background-size:auto,52px_52px,52px_52px] lg:grid-cols-[248px_1fr]">
+    <aside className="hidden min-h-screen flex-col border-r border-white/10 bg-[#070814]/85 p-5 backdrop-blur-2xl lg:flex"><div className="flex items-center gap-3 border-b border-white/10 px-2 pb-6"><b className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-100 via-violet-400 to-cyan-300 text-slate-950"><Zap size={18}/></b><span className="flex flex-col"><strong className="text-xs tracking-[.13em]">ACTION SWITCH</strong><small className="font-mono text-[7px] text-slate-500">THINK LESS. MOVE NOW.</small></span></div>
+      <nav className="flex flex-col gap-1 py-6 text-xs"><button className="flex min-h-11 items-center gap-3 rounded-xl border border-violet-400/20 bg-gradient-to-r from-violet-500/15 to-transparent px-3 text-left"><Sparkles size={15}/>오늘의 실행<i className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#9d87ff]"/></button><button className="flex min-h-11 items-center gap-3 px-3 text-slate-500"><Inbox size={15}/>메모 보관함<em className="ml-auto rounded-full bg-white/5 px-2 py-0.5 not-italic">12</em></button><button className="flex min-h-11 items-center gap-3 px-3 text-slate-500"><Clock3 size={15}/>실행 기록</button></nav>
+      <p className="px-2 font-mono text-[8px] tracking-[.15em] text-slate-600">YOUR MOMENTUM</p><div className="mt-2 flex items-center gap-3 rounded-xl border border-amber-300/10 bg-amber-300/[.035] p-3 text-amber-300"><Flame size={17}/><span className="flex flex-col"><strong className="text-[10px] text-amber-100/80">4일 연속 실행 중</strong><small className="text-[8px] text-slate-600">작은 시작이 흐름을 만들고 있어요.</small></span></div><div className="flex-1"/>
+      <div className="grid grid-cols-[7px_1fr] gap-2 rounded-xl border border-white/10 p-3 font-mono text-[8px] text-slate-400"><i className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_9px_#6fe9aa]"/>SUPABASE CONNECTED<small className="col-start-2 text-slate-600">DEMO EVENTS ONLY</small></div><a href="https://app.notion.com/p/386b66e9767781e5a51df29cdf59690e" target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[.025] p-3 text-[9px] text-slate-400">AI 학습계획서 <ChevronRight size={13}/></a>
+    </aside>
+    <section className="relative z-10 flex min-w-0 flex-col px-4 md:px-8"><header className="flex h-16 items-center justify-between border-b border-white/10 md:h-20"><span className="flex items-center gap-3"><small className="font-mono text-[8px] tracking-[.15em] text-slate-500">TODAY</small><strong className="text-xs">{date}</strong></span><b className="flex items-center gap-2 font-mono text-[8px] text-slate-500"><i className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#6fe9aa]"/>LIVE 3D DEMO</b></header>
+      <div className="grid flex-1 gap-5 py-4 xl:grid-cols-[1.08fr_.92fr] xl:py-6"><section className="flex min-h-[610px] flex-col justify-center rounded-[18px] border border-white/10 bg-gradient-to-br from-[#191b35]/80 to-[#090a18]/75 p-6 shadow-2xl md:p-12 xl:min-h-[650px] xl:p-[clamp(34px,5vw,70px)]">
+        {phase==="capture"&&<><div className="flex items-center gap-2 font-mono text-[9px] tracking-[.15em] text-violet-400"><BrainCircuit size={15}/>STEP 01 · CAPTURE</div><h1 className="my-6 text-[43px] font-bold leading-[1.06] tracking-[-.055em] md:text-[clamp(39px,4.6vw,65px)]">쌓아둔 생각을,<br/><em className="not-italic text-violet-200">오늘의 행동</em>으로.</h1><p className="mb-8 max-w-xl text-[13px] leading-7 text-slate-400">완벽하게 정리하지 않아도 괜찮아요. 지금 머릿속에 걸려 있는 메모를 그대로 적어주세요.</p><div className="overflow-hidden rounded-2xl border border-violet-200/20 bg-[#050611]/60"><textarea value={memo} onChange={e=>setMemo(e.target.value)} maxLength={600} className="min-h-[150px] w-full resize-none bg-transparent p-5 text-[13px] leading-7 outline-none placeholder:text-slate-600" placeholder="예: 팀프로젝트 사용자 인터뷰를 시작해야 하는데 무엇부터 물어볼지 모르겠다."/><div className="flex min-h-14 items-center justify-between border-t border-white/10 px-3 pl-5"><span className="font-mono text-[8px] text-slate-600">{memo.length}/600</span><button className={primary} onClick={submit}><WandSparkles size={15}/>오늘의 1개 찾기</button></div></div><div className="mt-4 flex items-center gap-2 overflow-hidden"><span className="shrink-0 font-mono text-[8px] text-slate-600">QUICK START</span>{samples.map(s=><button key={s} onClick={()=>setMemo(s)} className="truncate rounded-full border border-white/10 bg-white/[.02] px-3 py-2 text-[8px] text-slate-500">{s}</button>)}</div></>}
+        {phase==="recommend"&&rec&&<><div className="flex items-center gap-2 font-mono text-[9px] tracking-[.15em] text-violet-400"><Sparkles size={15}/>STEP 02 · ONE ACTION</div><p className="mt-6 font-mono text-[9px] tracking-widest text-slate-500">오늘의 단 1개</p><h2 className="my-4 text-[clamp(32px,3.5vw,52px)] font-bold leading-tight tracking-[-.045em]">{rec.action}</h2><div className="flex flex-col gap-2 rounded-2xl border border-cyan-300/15 bg-cyan-300/[.045] p-5"><small className="font-mono text-[8px] tracking-widest text-cyan-300">5 MINUTE FIRST STEP</small><strong className="text-sm">{rec.step}</strong></div><p className="my-6 text-xs leading-6 text-slate-400">{rec.reason}</p><div className="flex gap-3"><button className={primary} onClick={()=>{setPhase("focus");setRunning(true);void track("action_started")}}><Play size={16}/>15분 실행 시작</button><button className={ghost} onClick={reset}><RotateCcw size={15}/>다시 적기</button></div></>}
+        {phase==="focus"&&rec&&<><div className="flex items-center gap-2 font-mono text-[9px] tracking-[.15em] text-amber-300"><Clock3 size={15}/>STEP 03 · FOCUS</div><p className="mt-6 font-mono text-[9px] text-slate-500">지금은 이것만</p><h2 className="my-4 text-[clamp(30px,3vw,48px)] font-bold tracking-[-.04em]">{rec.action}</h2><div style={{background:`radial-gradient(circle,#12152e 62%,transparent 63%),conic-gradient(#ffc36c ${progress*360}deg,rgba(255,255,255,.06) 0)`}} className="mx-auto my-4 grid h-52 w-52 place-content-center rounded-full"><strong className="font-mono text-4xl">{timer}</strong><small className="mt-2 text-center font-mono text-[8px] text-slate-500">FOCUS SESSION</small></div><p className="mb-6 text-center text-[11px] text-slate-400">첫 행동 · {rec.step}</p><div className="flex justify-center gap-3"><button className={primary} onClick={()=>setRunning(!running)}>{running?<Pause size={16}/>:<Play size={16}/>} {running?"잠시 멈춤":"계속하기"}</button><button className={ghost} onClick={()=>{setRunning(false);setPhase("done");void track("completed_early")}}><Check size={15}/>완료</button></div></>}
+        {phase==="done"&&<><div className="flex items-center gap-2 font-mono text-[9px] tracking-[.15em] text-emerald-300"><Check size={15}/>STEP 04 · REFLECT</div><h2 className="my-5 text-[clamp(32px,3.5vw,52px)] font-bold leading-tight tracking-[-.045em]">생각 하나가<br/><em className="not-italic text-violet-200">행동으로 바뀌었어요.</em></h2><p className="mb-6 text-[13px] leading-7 text-slate-400">완벽하게 끝내지 않아도 괜찮습니다. 시작한 사실과 다음 단서를 짧게 남겨주세요.</p><textarea className="mb-5 min-h-32 w-full resize-none rounded-2xl border border-white/10 bg-[#050611]/60 p-5 text-xs outline-none" value={reflection} onChange={e=>setReflection(e.target.value)} placeholder="무엇을 시작했고, 다음에는 무엇을 하면 될까요?"/><button className={primary} onClick={()=>{void track("reflection_saved",{length:reflection.length});reset()}}><Check size={16}/>기록하고 새로 시작</button></>}
+      </section>
+      <aside className="flex min-h-[520px] flex-col rounded-[18px] border border-white/10 bg-gradient-to-br from-[#191b35]/80 to-[#090a18]/75 p-5 shadow-2xl xl:min-h-[650px]"><div className="flex justify-between"><span className="flex flex-col gap-1"><small className="font-mono text-[8px] tracking-widest text-slate-500">ACTION ENERGY</small><strong className="text-xs">{phase==="focus"?"집중 모드":phase==="done"?"실행 완료":"대기 중"}</strong></span><b className="h-max rounded-full border border-white/10 px-3 py-1.5 font-mono text-[8px] text-violet-300">{phase.toUpperCase()}</b></div><Orbit phase={phase} progress={progress}/><div className="mb-5 flex items-center justify-center gap-2 font-mono text-[8px] text-slate-600"><span className="text-slate-400">● 생각 수집</span><ChevronRight size={12}/><span className={phase!=="capture"?"text-slate-400":""}>● 행동 선택</span><ChevronRight size={12}/><span className={phase==="focus"||phase==="done"?"text-slate-400":""}>● 실행</span></div><div className="grid grid-cols-2 gap-2 md:grid-cols-3"><Metric label="THIS WEEK" value="7" note="실행 시작"/><Metric label="FOCUS TIME" value="86m" note="누적 집중"/><div className="hidden md:block"><Metric label="COMPLETION" value="71%" note="완료율"/></div></div></aside>
+      </div><footer className="flex h-10 items-center justify-between border-t border-white/10 font-mono text-[7px] tracking-widest text-slate-600"><span>THREE.JS · NEXT.JS · SUPABASE · VERCEL</span><span>CLAUDE MAX 5× LEARNING DEMO</span></footer>
+    </section></main>;
+}
+function Metric({label,value,note}:{label:string;value:string;note:string}){return <span className="flex flex-col gap-1 rounded-xl border border-white/10 bg-white/[.018] p-4"><small className="font-mono text-[7px] text-slate-600">{label}</small><strong className="font-mono text-2xl">{value}</strong><em className="text-[8px] not-italic text-slate-500">{note}</em></span>}

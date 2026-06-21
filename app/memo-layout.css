@@ -1,0 +1,90 @@
+/* Memo archive layout: keep the quick-add control beside the category chips. */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 14px;
+  align-items: end;
+}
+
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:first-child,
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(2) {
+  display: contents !important;
+}
+
+/* Page title */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:first-child > div:first-child {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-width: 0;
+  margin-bottom: 4px;
+}
+
+/* Quick add input + button */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:first-child > div:last-child {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+  max-width: none !important;
+  align-self: center;
+}
+
+/* Category chips: starts with '전체', immediately beside quick add. */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(2) > div:last-child {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  justify-content: flex-start;
+  min-width: 0;
+  padding-bottom: 0 !important;
+  scrollbar-width: thin;
+}
+
+/* Search sits on its own clean row below. */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(2) > div:first-child {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  width: min(100%, 480px);
+  max-width: none !important;
+}
+
+/* Memo list + detail panel */
+main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(3) {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  margin-top: 2px;
+}
+
+@media (max-width: 760px) {
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+  }
+
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:first-child > div:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:first-child > div:last-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(2) > div:last-child {
+    grid-column: 1;
+    grid-row: 3;
+    overflow-x: auto;
+  }
+
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(2) > div:first-child {
+    grid-column: 1;
+    grid-row: 4;
+    width: 100%;
+  }
+
+  main div.py-4:has(input[placeholder="새 메모 빠르게 추가"]) > div:nth-child(3) {
+    grid-column: 1;
+    grid-row: 5;
+  }
+}
